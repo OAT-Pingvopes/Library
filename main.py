@@ -14,7 +14,7 @@ def main():
             vk.messages.send(user_id=event.obj.message['from_id'],
                              message="Попробуем найти...")
             vk.messages.send(user_id=event.obj.message['from_id'],
-                             message=f'{txt_msg} - это...')
+                             message=f'{txt_msg} - это... что-то')
 
 
 if __name__ == '__main__':
