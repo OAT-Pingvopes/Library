@@ -17,7 +17,5 @@ def main():
                              message=f'{txt_msg} - это...')
 
 
-
-
 if __name__ == '__main__':
     main()
