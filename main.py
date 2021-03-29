@@ -9,8 +9,14 @@ def main():
     for event in longpoll.listen():
         if event.type == VkBotEventType.MESSAGE_NEW:
             vk = vk_session.get_api()
+            txt_msg = event.obj.message['text']
+            print('Текст:', txt_msg)
             vk.messages.send(user_id=event.obj.message['from_id'],
-                             message="Привет")
+                             message="Попробуем найти...")
+            vk.messages.send(user_id=event.obj.message['from_id'],
+                             message=f'{txt_msg} - это...')
+
+
 
 
 if __name__ == '__main__':
