@@ -1,6 +1,5 @@
 import vk_api
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
-import random
 
 
 def main():
@@ -11,8 +10,7 @@ def main():
         if event.type == VkBotEventType.MESSAGE_NEW:
             vk = vk_session.get_api()
             vk.messages.send(user_id=event.obj.message['from_id'],
-                             message="Привет",
-                             random_id=random.randint(0, 2 ** 64))
+                             message="Привет")
 
 
 if __name__ == '__main__':
