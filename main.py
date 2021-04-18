@@ -33,9 +33,18 @@ def main():
                                          message='К сожалению произошла непредвиденная ошибка,'
                                                  ' моя команда работает над её исправлением',
                                          random_id=random.randint(0, 2 ** 64))
-                elif '!help' == txt_msg.lower():
+                elif '!калькулятор' == txt_msg[:12].lower():
+                    try:
+                        vk.messages.send(user_id=event.obj.message['from_id'],
+                                         message=f"Ответ: {eval(txt_msg[13:])}",
+                                         random_id=random.randint(0, 2 ** 64))
+                    except:
+                        vk.messages.send(user_id=event.obj.message['from_id'],
+                                         message='Некорректное значение',
+                                         random_id=random.randint(0, 2 ** 64))
+                elif '!помощь' == txt_msg.lower():
                     vk.messages.send(user_id=event.obj.message['from_id'],
-                                     message='!help - для показа всех команд'
+                                     message='!помощь - для показа всех команд'
                                              '!найди слово <слово> - выводит определение слова из википедии',
                                      random_id=random.randint(0, 2 ** 64))
                 else:
