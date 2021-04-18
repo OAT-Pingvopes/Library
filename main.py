@@ -1,16 +1,33 @@
 import random
+import requests
 import vk_api
+from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 import wikipedia
-import random
+import json
 
 wikipedia.set_lang('ru')
+vk_session = vk_api.VkApi(
+        token='64f7d38df6cbac49f2146d5037a93647b83f9897e355478551f3bee2d393cc2a8f57aefd5803bf5b88750')
+longpoll = VkBotLongPoll(vk_session, 203632426)
+
+
+def create_keyboard():
+    keyboard = vk_api.keyboard.VkKeyboard(one_time=False)
+    keyboard.add_button("!Помощь", color=vk_api.keyboard.VkKeyboardColor.NEGATIVE)
+    return keyboard.get_keyboard()
+
+
+def create_empty_keyboard():
+    keyboard = vk_api.keyboard.VkKeyboard.get_empty_keyboard()
+    return keyboard
 
 
 def main():
     vk_session = vk_api.VkApi(
         token='64f7d38df6cbac49f2146d5037a93647b83f9897e355478551f3bee2d393cc2a8f57aefd5803bf5b88750')
     longpoll = VkBotLongPoll(vk_session, 203632426)
+
     for event in longpoll.listen():
         url = 'https://ru.wikipedia.org/wiki/'
         if event.type == VkBotEventType.MESSAGE_NEW:
@@ -18,7 +35,17 @@ def main():
             txt_msg = event.obj.message['text']
             url += txt_msg
             if '!' == txt_msg[0]:
-                if 'найди слово' == txt_msg[1:12].lower():
+                if '!запусти клавиатуру' == txt_msg:
+                    vk.messages.send(user_id=event.obj.message['from_id'],
+                                     message="Создаю...",
+                                     random_id=random.randint(0, 2 ** 64),
+                                     keyboard=create_keyboard())
+                elif '!убери клавиатуру' == txt_msg:
+                    vk.messages.send(user_id=event.obj.message['from_id'],
+                                     message="Убираю...",
+                                     random_id=random.randint(0, 2 ** 64),
+                                     keyboard=create_empty_keyboard())
+                elif '!найди слово' == txt_msg[:12].lower():
                     vk.messages.send(user_id=event.obj.message['from_id'],
                                      message="Попробуем найти...",
                                      random_id=random.randint(0, 2 ** 64))
@@ -42,15 +69,27 @@ def main():
                         vk.messages.send(user_id=event.obj.message['from_id'],
                                          message='Некорректное значение',
                                          random_id=random.randint(0, 2 ** 64))
-                elif '!помощь' == txt_msg.lower():
+                elif '!найди на карте' == txt_msg[:15].lower():
+                    geocoder_request = f"http://geocode-maps.yandex.ru/1.x/?apikey=40d1649f-0493-4b70-98ba-98533de7710b&geocode={txt_msg[16:]}, 1&format=json"
+                    response = requests.get(geocoder_request)
+                    if response:
+                        json_response = response.json()
+                        toponym_coords = json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]['Point']['pos']
+                        tpc = toponym_coords.split(' ')
                     vk.messages.send(user_id=event.obj.message['from_id'],
-                                     message='!помощь - для показа всех команд'
-                                             '!найди слово <слово> - выводит определение слова из википедии',
+                                     message=f"https://static-maps.yandex.ru/1.x/?ll={tpc[0]},{tpc[1]}&size=450,450&z=10&l=map",
                                      random_id=random.randint(0, 2 ** 64))
+                elif '!помощь' == txt_msg[:7].lower():
+                    if '!помощь' == txt_msg.lower():
+                        vk.messages.send(user_id=event.obj.message['from_id'],
+                                         message='!помощь - для показа всех команд\n'
+                                                 '!помощь <команда> - для описания определённой команды\n'
+                                                 '!найди слово <слово> - выводит определение слова из википедии\n',
+                                         random_id=random.randint(0, 2 ** 64))
                 else:
                     vk.messages.send(user_id=event.obj.message['from_id'],
                                      message='Команда введена неправильно'
-                                             'Для списка команд напишите !help',
+                                             'Для списка команд напишите !помощь',
                                      random_id=random.randint(0, 2 ** 64))
 
 
