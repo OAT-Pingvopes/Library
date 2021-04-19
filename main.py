@@ -4,7 +4,7 @@ import vk_api
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 import wikipedia
-import json
+from googletrans import Translator
 
 wikipedia.set_lang('ru')
 vk_session = vk_api.VkApi(
@@ -35,12 +35,12 @@ def main():
             txt_msg = event.obj.message['text']
             url += txt_msg
             if '!' == txt_msg[0]:
-                if '!запусти клавиатуру' == txt_msg:
+                if '!запусти клавиатуру' == txt_msg.lower():
                     vk.messages.send(user_id=event.obj.message['from_id'],
                                      message="Создаю...",
                                      random_id=random.randint(0, 2 ** 64),
                                      keyboard=create_keyboard())
-                elif '!убери клавиатуру' == txt_msg:
+                elif '!убери клавиатуру' == txt_msg.lower():
                     vk.messages.send(user_id=event.obj.message['from_id'],
                                      message="Убираю...",
                                      random_id=random.randint(0, 2 ** 64),
@@ -70,21 +70,36 @@ def main():
                                          message='Некорректное значение',
                                          random_id=random.randint(0, 2 ** 64))
                 elif '!найди на карте' == txt_msg[:15].lower():
-                    geocoder_request = f"http://geocode-maps.yandex.ru/1.x/?apikey=40d1649f-0493-4b70-98ba-98533de7710b&geocode={txt_msg[16:]}, 1&format=json"
-                    response = requests.get(geocoder_request)
-                    if response:
-                        json_response = response.json()
-                        toponym_coords = json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]['Point']['pos']
-                        tpc = toponym_coords.split(' ')
-                    vk.messages.send(user_id=event.obj.message['from_id'],
-                                     message=f"https://static-maps.yandex.ru/1.x/?ll={tpc[0]},{tpc[1]}&size=450,450&z=10&l=map",
-                                     random_id=random.randint(0, 2 ** 64))
-                elif '!помощь' == txt_msg[:7].lower():
-                    if '!помощь' == txt_msg.lower():
+                    try:
+                        geocoder_request = f"http://geocode-maps.yandex.ru/1.x/?apikey=40d1649f-0493-4b70-98ba-98533de7710b&geocode={txt_msg[16:]}, 1&format=json"
+                        response = requests.get(geocoder_request)
+                        if response:
+                            json_response = response.json()
+                            toponym_coords = json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]['Point']['pos']
+                            tpc = toponym_coords.split(' ')
                         vk.messages.send(user_id=event.obj.message['from_id'],
-                                         message='!помощь - для показа всех команд\n'
-                                                 '!помощь <команда> - для описания определённой команды\n'
-                                                 '!найди слово <слово> - выводит определение слова из википедии\n',
+                                         message=f"https://static-maps.yandex.ru/1.x/?ll={tpc[0]},{tpc[1]}&size=450,450&z=10&l=map",
+                                         random_id=random.randint(0, 2 ** 64))
+                    except:
+                        vk.messages.send(user_id=event.obj.message['from_id'],
+                                         message="Произошла непредвиденная ошибка",
+                                         random_id=random.randint(0, 2 ** 64))
+                elif '!помощь' == txt_msg[:7].lower():
+                    vk.messages.send(user_id=event.obj.message['from_id'],
+                                     message='!помощь - для показа всех команд\n'
+                                             '!найди слово <слово> - выводит определение слова из википедии\n',
+                                     random_id=random.randint(0, 2 ** 64))
+                elif '!переведи' == txt_msg[:9].lower():
+                    translator = Translator()
+                    to_trans = txt_msg[10:].split(' ')
+                    try:
+                        res = translator.translate(to_trans[0], src=to_trans[1], dest=to_trans[2])
+                        vk.messages.send(user_id=event.obj.message['from_id'],
+                                         message=res.text,
+                                         random_id=random.randint(0, 2 ** 64))
+                    except:
+                        vk.messages.send(user_id=event.obj.message['from_id'],
+                                         message="Неправильно введены данные",
                                          random_id=random.randint(0, 2 ** 64))
                 else:
                     vk.messages.send(user_id=event.obj.message['from_id'],
