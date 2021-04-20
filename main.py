@@ -5,11 +5,50 @@ from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 import wikipedia
 from googletrans import Translator
+import json
 
 wikipedia.set_lang('ru')
 vk_session = vk_api.VkApi(
         token='64f7d38df6cbac49f2146d5037a93647b83f9897e355478551f3bee2d393cc2a8f57aefd5803bf5b88750')
 longpoll = VkBotLongPoll(vk_session, 203632426)
+
+
+languages = {'африканский': 'afrikaans', 'албанский': 'albanian', 'амхарский': 'amharic',
+                                 'арабский': 'arabic', 'армянский': 'armenian', 'азербайджанский': 'azerbaijani',
+                                 'баскский': 'basque', 'белорусский': 'belarusian', 'бенгальский': 'bengali',
+                                 'боснийский': 'bosnian', 'болгарский': 'bulgarian', 'каталонский': 'catalan',
+                                 'кебуано': 'cebuano', 'чичева': 'chichewa',
+                                 'китайский(упрощённый)': 'chinese (simplified)',
+                                 'китайский(традиционный)': 'chinese (traditional)', 'корсиканский': 'corsican',
+                                 'хорватский': 'croatian', 'чешский': 'czech', 'датский': 'danish',
+                                 'голландский': 'dutch', 'английский': 'english', 'эсперантский': 'esperanto',
+                                 'эстонский': 'estonian', 'филипинский': 'filipino', 'финский': 'finnish',
+                                 'французский': 'french', 'фризский': 'frisian', 'галицкий': 'galician',
+                                 'грузинский': 'georgian', 'немецкий': 'german', 'греческий': 'greek',
+                                 'гуджарати': 'gujarati', 'гаитянский': 'haitian creole', 'хауса': 'hausa',
+                                 'гавайский': 'hawaiian', 'еврейский': 'hebrew', 'израильский': 'hebrew',
+                                 'хинди': 'hindi', 'хминг': 'hmong', 'венгерский': 'hungarian',
+                                 'исландский': 'icelandic', 'игбо': 'igbo', 'индонезийский': 'indonesian',
+                                 'ирландский': 'irish', 'итальянский': 'italian', 'японский': 'japanese',
+                                 'яванский': 'javanese', 'канадский': 'kannada', 'казахский': 'kazakh',
+                                 'кхмерский': 'khmer', 'корейский': 'korean', 'курдский': 'kurdish (kurmanji)',
+                                 'киргизский': 'kyrgyz', 'лао': 'lao', 'латинский': 'latin', 'латвийский': 'latvian',
+                                 'литвийский': 'lithuanian', 'люксембургский': 'luxembourgish',
+                                 'македонский': 'macedonian', 'малагасийский': 'malagasy', 'малайский': 'malay',
+                                 'малайялама': 'malayalam', 'мальтийский': 'maltese', 'маори': 'maori',
+                                 'маратхи': 'marathi', 'монгольский': 'mongolian', 'мьянма': 'myanmar (burmese)',
+                                 'непальский': 'nepali', 'норвежский': 'norwegian', 'одия': 'odia',
+                                 'пушту': 'pashto', 'персидский': 'persian', 'польский': 'polish',
+                                 'португальский': 'portuguese', 'пенджаби': 'punjabi', 'румынский': 'romanian',
+                                 'русский': 'russian', 'самоанский': 'samoan', 'шотландский гэльский': 'scots gaelic',
+                                 'сербский': 'serbian', 'сесото': 'sesotho', 'шона': 'shona', 'синдхи': 'sindhi',
+                                 'синдбала': 'sinhala', 'словакский': 'slovak', 'словенский': 'slovenian',
+                                 'сомалийский': 'somali', 'испанский': 'spanish', 'сунданский': 'sundanese',
+                                 'суахили': 'swahili', 'шведский': 'swedish', 'таджикский': 'tajik',
+                                 'тамильский': 'tamil', 'телугу': 'telugu', 'тайский': 'thai', 'турецкий': 'turkish',
+                                 'украинский': 'ukrainian', 'урду': 'urdu', 'уйгур': 'uyghur', 'узбекский': 'uzbek',
+                                 'вьетнамский': 'vietnamese', 'валлийский': 'welsh', 'коса': 'xhosa', 'идиш': 'yiddish',
+                                 'йоруба': 'yoruba', 'зулу': 'zulu'}
 
 
 def create_keyboard():
@@ -87,13 +126,15 @@ def main():
                 elif '!помощь' == txt_msg[:7].lower():
                     vk.messages.send(user_id=event.obj.message['from_id'],
                                      message='!помощь - для показа всех команд\n'
-                                             '!найди слово <слово> - выводит определение слова из википедии\n',
+                                             '!найди слово <слово> - выводит определение слова из википедии\n'
+                                             '!переведи <слово> <исходный язык> <целевой язык> - переводит слово, '
+                                             'для просмотра списка языков введите !языки_переводчика\n',
                                      random_id=random.randint(0, 2 ** 64))
                 elif '!переведи' == txt_msg[:9].lower():
                     translator = Translator()
                     to_trans = txt_msg[10:].split(' ')
                     try:
-                        res = translator.translate(to_trans[0], src=to_trans[1], dest=to_trans[2])
+                        res = translator.translate(to_trans[0], src=languages[to_trans[1]], dest=languages[to_trans[2]])
                         vk.messages.send(user_id=event.obj.message['from_id'],
                                          message=res.text,
                                          random_id=random.randint(0, 2 ** 64))
@@ -101,6 +142,10 @@ def main():
                         vk.messages.send(user_id=event.obj.message['from_id'],
                                          message="Неправильно введены данные",
                                          random_id=random.randint(0, 2 ** 64))
+                elif '!языки_переводчика' == txt_msg.lower():
+                    vk.messages.send(user_id=event.obj.message['from_id'],
+                                     message=f'{languages.keys()}',
+                                     random_id=random.randint(0, 2 ** 64))
                 else:
                     vk.messages.send(user_id=event.obj.message['from_id'],
                                      message='Команда введена неправильно'
