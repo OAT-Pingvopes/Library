@@ -53,7 +53,19 @@ languages = {'африканский': 'afrikaans', 'албанский': 'alban
 
 def create_keyboard():
     keyboard = vk_api.keyboard.VkKeyboard(one_time=False)
-    keyboard.add_button("!Помощь", color=vk_api.keyboard.VkKeyboardColor.NEGATIVE)
+    keyboard.add_button("!Помощь", color=vk_api.keyboard.VkKeyboardColor.PRIMARY)
+    keyboard.add_button("!убери клавиатуру", color=vk_api.keyboard.VkKeyboardColor.POSITIVE)
+    keyboard.add_button("!играть", color=vk_api.keyboard.VkKeyboardColor.POSITIVE)
+    return keyboard.get_keyboard()
+
+
+def gaming_keyboard():
+    keyboard = vk_api.keyboard.VkKeyboard(one_time=False)
+    keyboard.add_button("!баланс", color=vk_api.keyboard.VkKeyboardColor.POSITIVE)
+    keyboard.add_button("!сделать бросок", color=vk_api.keyboard.VkKeyboardColor.POSITIVE)
+    keyboard.add_line()
+    keyboard.add_button("!помощь", color=vk_api.keyboard.VkKeyboardColor.PRIMARY)
+    keyboard.add_button("!закончить игру", color=vk_api.keyboard.VkKeyboardColor.NEGATIVE)
     return keyboard.get_keyboard()
 
 
@@ -66,14 +78,14 @@ def main():
     vk_session = vk_api.VkApi(
         token='64f7d38df6cbac49f2146d5037a93647b83f9897e355478551f3bee2d393cc2a8f57aefd5803bf5b88750')
     longpoll = VkBotLongPoll(vk_session, 203632426)
-
+    c = 0
     for event in longpoll.listen():
         url = 'https://ru.wikipedia.org/wiki/'
         if event.type == VkBotEventType.MESSAGE_NEW:
             vk = vk_session.get_api()
             txt_msg = event.obj.message['text']
             url += txt_msg
-            if '!' == txt_msg[0]:
+            if '!' == txt_msg[0] and c == 0:
                 if '!запусти клавиатуру' == txt_msg.lower():
                     vk.messages.send(user_id=event.obj.message['from_id'],
                                      message="Создаю...",
@@ -117,7 +129,7 @@ def main():
                             toponym_coords = json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]['Point']['pos']
                             tpc = toponym_coords.split(' ')
                         vk.messages.send(user_id=event.obj.message['from_id'],
-                                         message=f"https://static-maps.yandex.ru/1.x/?ll={tpc[0]},{tpc[1]}&size=450,450&z=10&l=map",
+                                         message=f"https://static-maps.yandex.ru/1.x/?ll={tpc[0]},{tpc[1]}&size=450,450&z=8&l=map",
                                          random_id=random.randint(0, 2 ** 64))
                     except:
                         vk.messages.send(user_id=event.obj.message['from_id'],
@@ -130,6 +142,16 @@ def main():
                                              '!переведи <слово> <исходный язык> <целевой язык> - переводит слово, '
                                              'для просмотра списка языков введите !языки_переводчика\n',
                                      random_id=random.randint(0, 2 ** 64))
+                elif '!играть' == txt_msg.lower():
+                    vk.messages.send(user_id=event.obj.message['from_id'],
+                                     message="Запускаю...",
+                                     random_id=random.randint(0, 2 ** 64),
+                                     keyboard=create_empty_keyboard())
+                    vk.messages.send(user_id=event.obj.message['from_id'],
+                                     message="Запустил...",
+                                     random_id=random.randint(0, 2 ** 64),
+                                     keyboard=gaming_keyboard())
+                    c = 1
                 elif '!переведи' == txt_msg[:9].lower():
                     translator = Translator()
                     to_trans = txt_msg[10:].split(' ')
@@ -151,6 +173,29 @@ def main():
                                      message='Команда введена неправильно'
                                              'Для списка команд напишите !помощь',
                                      random_id=random.randint(0, 2 ** 64))
+            elif '!' == txt_msg[0] and c == 1:
+                if '!сделать бросок' == txt_msg.lower():
+                    vk.messages.send(user_id=event.obj.message['from_id'],
+                                     message=random.randint(1, 6),
+                                     random_id=random.randint(0, 2 ** 64))
+                elif '!угадать число' == txt_msg[:14].lower():
+                    values = txt_msg[15:].lower().split(' ')
+                    r_num = random.randint(1, int(values[0]))
+                    count = int(values[1]) * (int(values[0]) - 1)
+                    if r_num == int(values[2]):
+                        vk.messages.send(user_id=event.obj.message['from_id'],
+                                         message=f"Вы угадали. Выигрыш составил {count}(множитель: {int(values[0]) - 1})",
+                                         random_id=random.randint(0, 2 ** 64))
+                    else:
+                        vk.messages.send(user_id=event.obj.message['from_id'],
+                                         message=f"Вы проиграли {count}. Правильный ответ {r_num}",
+                                         random_id=random.randint(0, 2 ** 64))
+                elif '!закончить игру' == txt_msg.lower():
+                    vk.messages.send(user_id=event.obj.message['from_id'],
+                                     message="Выключаю...",
+                                     random_id=random.randint(0, 2 ** 64),
+                                     keyboard=create_empty_keyboard())
+                    c = 0
 
 
 if __name__ == '__main__':
