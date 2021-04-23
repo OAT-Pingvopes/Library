@@ -5,6 +5,7 @@ from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 import wikipedia
 from googletrans import Translator
+import sqlite3
 
 wikipedia.set_lang('ru')
 vk_session = vk_api.VkApi(
@@ -78,6 +79,8 @@ def main():
         token='64f7d38df6cbac49f2146d5037a93647b83f9897e355478551f3bee2d393cc2a8f57aefd5803bf5b88750')
     longpoll = VkBotLongPoll(vk_session, 203632426)
     c = 0
+    conn = sqlite3.connect("game_db.SQLITE")
+    cursor = conn.cursor()
     for event in longpoll.listen():
         url = 'https://ru.wikipedia.org/wiki/'
         if event.type == VkBotEventType.MESSAGE_NEW:
@@ -150,6 +153,9 @@ def main():
                                              '  !закончить игру - заканчивает игру',
                                      random_id=random.randint(0, 2 ** 64))
                 elif '!играть' == txt_msg.lower():
+                    ids = cursor.execute("""SELECT id FROM game_table""").fetchall()
+                    if str(event.obj.message['from_id']) not in ids:
+                        cursor.execute(f"""INSERT INTO game_table(id,score) VALUES({event.obj.message['from_id']},100)""")
                     vk.messages.send(user_id=event.obj.message['from_id'],
                                      message="Запускаю...",
                                      random_id=random.randint(0, 2 ** 64),
@@ -181,7 +187,6 @@ def main():
                                              'Для списка команд напишите !помощь',
                                      random_id=random.randint(0, 2 ** 64))
             elif '!' == txt_msg[0] and c == 1:
-                all_count = 100
                 if '!сделать бросок' == txt_msg.lower():
                     vk.messages.send(user_id=event.obj.message['from_id'],
                                      message=random.randint(1, 6),
@@ -191,18 +196,28 @@ def main():
                     r_num = random.randint(1, int(values[0]))
                     count = int(values[1]) * (int(values[0]) - 1)
                     if r_num == int(values[2]):
-                        all_count += count
+                        score = cursor.execute(
+                            f"""SELECT score FROM game_table WHERE id={event.obj.message['from_id']}""").fetchall()
+                        cursor.execute(f"""UPDATE game_table
+                                            SET score = {int(score[0][0]) + count}
+                                            WHERE id = {event.obj.message['from_id']}""")
                         vk.messages.send(user_id=event.obj.message['from_id'],
                                          message=f"Вы угадали. Выигрыш составил {count}(множитель: {int(values[0]) - 1})",
                                          random_id=random.randint(0, 2 ** 64))
                     else:
-                        all_count -=count
+                        score = cursor.execute(
+                            f"""SELECT score FROM game_table WHERE id={event.obj.message['from_id']}""").fetchall()
+                        cursor.execute(f"""UPDATE game_table
+                                            SET score =  {int(score[0][0]) - count}
+                                            WHERE id = {event.obj.message['from_id']}""")
                         vk.messages.send(user_id=event.obj.message['from_id'],
                                          message=f"Вы проиграли {count}. Правильный ответ {r_num}",
                                          random_id=random.randint(0, 2 ** 64))
                 elif '!баланс' == txt_msg.lower():
+                    score = cursor.execute(
+                        f"""SELECT score FROM game_table WHERE id={event.obj.message['from_id']}""").fetchall()
                     vk.messages.send(user_id=event.obj.message['from_id'],
-                                     message=f"{all_count}",
+                                     message=f"{score[0][0]}",
                                      random_id=random.randint(0, 2 ** 64))
                 elif '!закончить игру' == txt_msg.lower():
                     vk.messages.send(user_id=event.obj.message['from_id'],
@@ -214,6 +229,7 @@ def main():
                     vk.messages.send(user_id=event.obj.message['from_id'],
                                      message="Команда введена неправильно",
                                      random_id=random.randint(0, 2 ** 64))
+    conn.close()
 
 
 if __name__ == '__main__':
