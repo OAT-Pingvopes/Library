@@ -5,7 +5,6 @@ from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 import wikipedia
 from googletrans import Translator
-import json
 
 wikipedia.set_lang('ru')
 vk_session = vk_api.VkApi(
@@ -140,7 +139,15 @@ def main():
                                      message='!помощь - для показа всех команд\n'
                                              '!найди слово <слово> - выводит определение слова из википедии\n'
                                              '!переведи <слово> <исходный язык> <целевой язык> - переводит слово, '
-                                             'для просмотра списка языков введите !языки_переводчика\n',
+                                             'для просмотра списка языков введите !языки_переводчика\n'
+                                             '!запусти клавиатуру/!убери клавиатуру - запускает и убирает клавиатуру\n'
+                                             '!калькулятор <выражение> - вычисляет заданное выражение\n'
+                                             '!найди на карте <объект> - выводит ссылку на картинку с объектом\n'
+                                             '!играть - запускает небольшую игру\n'
+                                             '  !сделать бросок - кидает шестигранный кубик(выводит число от 1 до 6)\n'
+                                             '  !угадать число <диапазон> <ставка> <число>- игра на угадывание числа\n'
+                                             '  !баланс - выводит баланс(beta)\n'
+                                             '  !закончить игру - заканчивает игру',
                                      random_id=random.randint(0, 2 ** 64))
                 elif '!играть' == txt_msg.lower():
                     vk.messages.send(user_id=event.obj.message['from_id'],
@@ -174,6 +181,7 @@ def main():
                                              'Для списка команд напишите !помощь',
                                      random_id=random.randint(0, 2 ** 64))
             elif '!' == txt_msg[0] and c == 1:
+                all_count = 100
                 if '!сделать бросок' == txt_msg.lower():
                     vk.messages.send(user_id=event.obj.message['from_id'],
                                      message=random.randint(1, 6),
@@ -183,19 +191,29 @@ def main():
                     r_num = random.randint(1, int(values[0]))
                     count = int(values[1]) * (int(values[0]) - 1)
                     if r_num == int(values[2]):
+                        all_count += count
                         vk.messages.send(user_id=event.obj.message['from_id'],
                                          message=f"Вы угадали. Выигрыш составил {count}(множитель: {int(values[0]) - 1})",
                                          random_id=random.randint(0, 2 ** 64))
                     else:
+                        all_count -=count
                         vk.messages.send(user_id=event.obj.message['from_id'],
                                          message=f"Вы проиграли {count}. Правильный ответ {r_num}",
                                          random_id=random.randint(0, 2 ** 64))
+                elif '!баланс' == txt_msg.lower():
+                    vk.messages.send(user_id=event.obj.message['from_id'],
+                                     message=f"{all_count}",
+                                     random_id=random.randint(0, 2 ** 64))
                 elif '!закончить игру' == txt_msg.lower():
                     vk.messages.send(user_id=event.obj.message['from_id'],
                                      message="Выключаю...",
                                      random_id=random.randint(0, 2 ** 64),
                                      keyboard=create_empty_keyboard())
                     c = 0
+                else:
+                    vk.messages.send(user_id=event.obj.message['from_id'],
+                                     message="Команда введена неправильно",
+                                     random_id=random.randint(0, 2 ** 64))
 
 
 if __name__ == '__main__':
