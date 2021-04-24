@@ -1,5 +1,0 @@
-requests
-vk_api
-wikipedia
-googletrans
-sqlite3
